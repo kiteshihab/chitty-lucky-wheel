@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GHS Areekode Chitty</title>
+
+<!-- PWA: installable on iPhone Home Screen / Android -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0818">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chitty Draw">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+
+<style>
+  :root{
+    --bg:#05030d; --card:rgba(10,8,25,.88); --text:#fff8dc; --muted:#c6bfd8;
+    --primary:#ffb300; --primary2:#ff7a00; --danger:#e52d3f;
+    --border:#8f6a1c; --shadow:0 16px 45px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%,rgba(255,0,90,.13),transparent 25%),
+      radial-gradient(circle at 85% 30%,rgba(0,170,255,.12),transparent 25%),
+      radial-gradient(circle at 50% 80%,rgba(255,170,0,.10),transparent 30%),
+      #05030d;
+    color:var(--text); min-height:100vh; overflow-x:hidden;
+  }
+  .wrap{max-width:1150px;margin:auto;padding:18px}
+  header{text-align:center;margin:8px 0 18px}
+  h1{
+    margin:0;font-size:clamp(28px,5vw,46px);letter-spacing:1px;
+    color:#ffd34e;text-shadow:0 0 8px #ff9d00,0 0 24px #ff5b00;
+  }
+  .sub{color:#f5d98a;margin:6px 0 0;font-weight:700}
+  .grid{display:grid;grid-template-columns:minmax(300px,1.15fr) minmax(290px,.85fr);gap:18px}
+  .card{
+    background:linear-gradient(145deg,rgba(22,13,43,.94),rgba(7,7,18,.92));
+    border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow),0 0 22px rgba(255,174,0,.08);
+    padding:16px;
+  }
+  .wheel-card{display:flex;flex-direction:column;align-items:center}
+  .wheelbox{position:relative;width:min(88vw,680px);aspect-ratio:1;filter:drop-shadow(0 0 22px rgba(255,174,0,.18))}
+  canvas{width:100%;height:100%;display:block}
+  .wheelbox::before{
+    content:"";position:absolute;inset:4%;border-radius:50%;pointer-events:none;
+    box-shadow:0 0 0 7px rgba(255,191,40,.8),0 0 18px #ffae00,0 0 45px rgba(255,95,0,.28);
+    z-index:0;
+  }
+  .pointer{
+    position:absolute;left:50%;top:-2px;transform:translateX(-50%);
+    width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;
+    border-top:0;border-bottom:40px solid #ff304f;filter:drop-shadow(0 3px 5px rgba(0,0,0,.7)) drop-shadow(0 0 8px #ff304f);
+    z-index:3;
+  }
+  .center-dot{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:72px;height:72px;border-radius:50%;
+    background:radial-gradient(circle,#ffe88a,#ffae00 58%,#8d4700);
+    border:7px solid #fff0a8; color:#351700;
+    display:grid;place-items:center;font-weight:1000;font-size:15px;z-index:2;
+    box-shadow:0 0 12px #ffd34e,0 0 28px #ff7a00,inset 0 0 12px #fff;
+  }
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  button{
+    border:0;border-radius:13px;padding:12px 18px;font-size:16px;font-weight:800;cursor:pointer;
+    transition:.15s transform,.15s opacity; touch-action:manipulation;
+  }
+  button:active{transform:scale(.97)}
+  .spin{
+    background:linear-gradient(180deg,#ffe27a,#ff9d00 55%,#c45a00);color:#351700;
+    min-width:210px;font-size:20px;border:2px solid #ffe99b;
+    box-shadow:0 0 12px rgba(255,184,0,.8),inset 0 2px 0 #fff6c4;
+  }
+  .spin:hover{background:linear-gradient(180deg,#fff0a8,#ffb300 55%,#e56b00);transform:scale(1.03)}
+  .secondary{background:#211735;color:#ffe7a0;border:1px solid #6f5420}
+  .danger{background:#421323;color:#ffb7bd;border:1px solid #9e3343}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .status{text-align:center;margin:10px 0 0;color:var(--muted);font-weight:700}
+  .count{display:inline-flex;background:#261c08;color:#ffd34e;border:1px solid #8d651c;padding:5px 10px;border-radius:99px}
+  .result{
+    width:100%;margin-top:12px;padding:15px;border-radius:15px;
+    background:linear-gradient(145deg,rgba(54,25,12,.82),rgba(17,11,30,.9));
+    border:1px solid #8d651c;text-align:center;min-height:64px;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    box-shadow:inset 0 0 18px rgba(255,170,0,.08);
+  }
+  .result strong{font-size:24px;color:#ffd85a;text-shadow:0 0 10px #ff7a00}
+  .result small{color:var(--muted);margin-top:3px}
+  .list-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 10px}
+  .list-title h2{margin:0;font-size:20px}
+  .people{max-height:560px;overflow:auto;padding-right:3px}
+  .person{
+    display:flex;align-items:center;gap:10px;padding:10px 9px;border-bottom:1px solid #edf1f6;
+  }
+  .num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#edf3fb;font-weight:900;font-size:13px}
+  .pname{font-weight:750;flex:1;min-width:0}
+  .meta{font-size:12px;color:var(--muted);text-align:right}
+  .luck{font-weight:900;color:#c2410c}
+  .history{margin-top:14px}
+  .history h3{margin:0 0 8px}
+  .history-item{padding:9px 0;border-bottom:1px solid #edf1f6;font-size:14px}
+  .history-item b{font-size:15px}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .tools button{font-size:13px;padding:9px 11px}
+  .note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+  input[type=file]{display:none}
+  .empty{text-align:center;color:var(--muted);padding:28px 10px}
+  @media(max-width:820px){
+    .grid{grid-template-columns:1fr}
+    .people{max-height:430px}
+    .card{border-radius:18px}
+  }
+
+  #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:51;overflow:hidden}
+  .conf{position:absolute;width:10px;height:18px;opacity:0;animation:fall 2.8s ease-out forwards}
+  @keyframes fall{0%{transform:translateY(-10vh) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+  .winner-pop{animation:winnerPop .7s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes winnerPop{0%{transform:scale(.65);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+
+  /* Winner celebration overlay */
+  #winnerOverlay{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    z-index:9999; pointer-events:auto; padding:20px;
+    background:rgba(4,1,12,.28);
+  }
+  #winnerOverlay.show{display:flex !important;opacity:1 !important}
+  .winnerCard{
+    min-width:min(88vw,520px); padding:28px 34px; text-align:center;
+    border-radius:28px;
+    background:linear-gradient(145deg,rgba(35,12,45,.96),rgba(8,5,20,.97));
+    border:2px solid #ffd34e;
+    box-shadow:0 0 25px #ffb300,0 0 65px rgba(255,82,0,.45),inset 0 0 25px rgba(255,200,70,.10);
+    transform:scale(1);
+    animation:winnerCardPop .75s cubic-bezier(.16,1.4,.4,1) both;
+  }
+  .winnerCard .trophy{font-size:48px;filter:drop-shadow(0 0 10px #ffd34e)}
+  .winnerCard .congrats{
+    color:#ffe16a;font-size:clamp(25px,6vw,42px);font-weight:1000;
+    text-transform:uppercase;letter-spacing:2px;
+    text-shadow:0 0 8px #ff9d00,0 0 25px #ff5a00;
+  }
+  .winnerCard .winnerName{
+    margin:10px 0 4px;color:#fff;font-size:clamp(27px,7vw,52px);font-weight:1000;
+    text-shadow:0 0 12px #fff,0 0 28px #ffae00;
+  }
+  .winnerCard .luckText{color:#9dff78;font-size:18px;font-weight:800}
+  @keyframes overlayIn{from{opacity:0}to{opacity:1}}
+  @keyframes winnerCardPop{
+    0%{transform:scale(.65) rotate(-2deg);opacity:0}
+    70%{transform:scale(1.07) rotate(1deg);opacity:1}
+    100%{transform:scale(1) rotate(0);opacity:1}
+  }
+
+  /* Flower/petal shower */
+  #flowerShower{position:fixed;inset:0;z-index:69;pointer-events:none;overflow:hidden}
+  .petal{
+    position:absolute;top:-12vh;width:15px;height:23px;border-radius:75% 25% 75% 25%;
+    opacity:0;animation:petalFall linear forwards;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));
+    will-change:transform,opacity;
+  }
+  .petal.flower{width:25px;height:25px;background:transparent!important;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+  .petal.flower::before,.petal.flower::after{
+    content:"🌸";position:absolute;inset:0;font-size:25px;line-height:25px;
+  }
+  @keyframes petalFall{
+    0%{transform:translate3d(0,-10vh,0) rotate(0deg) scale(.7);opacity:0}
+    8%{opacity:1}
+    50%{transform:translate3d(var(--sway),52vh,0) rotate(360deg) scale(1)}
+    100%{transform:translate3d(calc(var(--sway) * -1),115vh,0) rotate(760deg) scale(.85);opacity:0}
+  }
+
+  .center-dot.winner{
+    width:clamp(110px,18vw,170px);height:clamp(110px,18vw,170px);
+    border-width:6px; background:radial-gradient(circle,#fff3a3 0%,#ffc400 38%,#d85b00 100%);
+    box-shadow:0 0 18px #ffe15b,0 0 42px #ff8c00,0 0 80px rgba(255,70,0,.45);
+    animation:centerWinnerPop .8s cubic-bezier(.15,1.45,.4,1);
+    padding:12px;
+  }
+  .center-dot .centerSmall{display:block;font-size:10px;line-height:1.1}
+  .center-dot .centerName{display:none}
+  .center-dot.winner .centerSmall{
+    font-size:11px;color:#7a2600;font-weight:1000;text-transform:uppercase;
+  }
+  .center-dot.winner .centerName{
+    display:block;margin-top:4px;color:#351200;font-size:clamp(13px,2.8vw,21px);
+    line-height:1.05;font-weight:1000;max-width:100%;overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  @keyframes centerWinnerPop{
+    0%{transform:translate(-50%,-50%) scale(.35) rotate(-8deg);opacity:0}
+    70%{transform:translate(-50%,-50%) scale(1.12) rotate(2deg);opacity:1}
+    100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1}
+  }
+
+  #domFireworks{position:fixed;inset:0;z-index:9998;pointer-events:none;overflow:hidden}
+  .burst{position:absolute;width:10px;height:10px;border-radius:50%;opacity:1;animation:burstOut 1.4s ease-out forwards}
+  @keyframes burstOut{
+    0%{transform:translate(0,0) scale(1);opacity:1}
+    100%{transform:translate(var(--dx),var(--dy)) scale(.15);opacity:0}
+  }
+
+  .demoBadge{
+    display:inline-block;margin:7px auto 0;padding:5px 10px;border-radius:99px;
+    color:#ffd85a;background:#2b1907;border:1px solid #8d651c;font-size:12px;font-weight:900;
+  }
+
+  /* Participant editor */
+  #editorModal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.72);padding:14px}
+  #editorModal.show{display:flex}
+  .editorBox{width:min(96vw,900px);max-height:92vh;overflow:auto;background:#10131f;color:#fff;
+    border:1px solid #d6a93a;border-radius:20px;padding:20px;box-shadow:0 0 50px rgba(255,190,40,.25)}
+  .editorBox h2{margin:0 0 5px;color:#ffd34e}
+  .editorBox .muted{color:#aeb6c7;font-size:13px;margin-bottom:14px}
+  .editorActions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .editorTable{width:100%;border-collapse:collapse}
+  .editorTable th,.editorTable td{padding:7px;border-bottom:1px solid #2b3040;text-align:left}
+  .editorTable input{width:100%;box-sizing:border-box;background:#1b2030;color:#fff;border:1px solid #454d62;
+    border-radius:8px;padding:8px}
+  .editorTable .del{background:#54222a;color:#fff;border:1px solid #8b3d48;border-radius:8px;padding:7px 10px}
+  .editorBtn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+  .editorBtn.primary{background:#ffd34e;color:#201500}
+  .editorBtn.secondary{background:#2b3346;color:#fff}
+  #editLockModal{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.78);padding:20px}
+  #editLockModal.show{display:flex}
+  .lockBox{width:min(92vw,380px);background:#10131f;border:1px solid #d6a93a;border-radius:18px;padding:24px;text-align:center}
+  .lockBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #555;background:#1b2030;color:#fff;margin:12px 0}
+  .editButton{margin-top:8px}
+
+
+#paymentModal{position:fixed;inset:0;z-index:10002;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78);padding:14px}
+#paymentModal.show{display:flex}
+.paymentBox{width:min(96vw,900px);max-height:92vh;overflow:auto;background:#10131f;color:#fff;border:1px solid #d6a93a;border-radius:20px;padding:20px;box-shadow:0 0 50px rgba(255,190,40,.25)}
+.paymentBox h2{margin:0 0 6px;color:#ffd34e}
+.paymentNote{color:#b7bfd0;font-size:13px;margin-bottom:14px}
+.paymentWinner{border:1px solid #3b4356;border-radius:14px;padding:14px;margin:12px 0;background:#171c2a}
+.paymentWinner h3{margin:0 0 8px;color:#fff}
+.paymentRows{display:grid;grid-template-columns:1fr auto;gap:6px 12px}
+.paymentRows div{padding:6px 0;border-bottom:1px solid #2b3040}
+.paymentTotal{margin-top:10px;font-weight:900;color:#ffd34e}
+.paymentShareHint{font-size:12px;color:#8ea0c2;margin-bottom:6px}
+
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="confetti"></div>
+<div id="flowerShower"></div>
+<div id="domFireworks"></div>
+<div id="winnerOverlay">
+  <div class="winnerCard">
+    <div class="trophy">🏆</div>
+    <div class="congrats">🎉 Congratulations! 🎉</div>
+    <div class="winnerName" id="overlayWinnerName"></div>
+    <div class="luckText" id="overlayLuck"></div>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <h1>🎰 GHSS LUCKY DRAW 🎡</h1>
+    <p class="sub">ഭാഗ്യചക്രം തിരിച്ച് ഈ മാസത്തെ ഭാഗ്യശാലിയെ തിരഞ്ഞെടുക്കാം</p>
+  </header>
+
+  <div class="grid">
+    <section class="card wheel-card">
+      <div class="wheelbox">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="900" height="900"></canvas>
+        <div class="center-dot" id="centerWinner">
+          <span class="centerSmall">SPIN</span>
+          <span class="centerName"></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="soundBtn" class="secondary" onclick="toggleSound()">🔊 Sound ON</button>
+        <button id="spinBtn" class="spin" onclick="spin()">🎯 SPIN</button>
+        <button class="secondary editButton" onclick="openPasswordGate(openEditor,'Edit Participants')">👥 EDIT PARTICIPANTS</button>
+        <button class="secondary editButton" onclick="openPasswordGate(openPaymentDistribution,'Payment Distribution')">💰 PAYMENT DISTRIBUTION</button>
+      </div>
+      <div class="controls">
+        <button id="nextMonthBtn" class="secondary" onclick="openPasswordGate(nextMonth,'Next Month')">📅 NEXT MONTH</button>
+        <button id="nextMonthSpinBtn" class="secondary" onclick="openPasswordGate(newMonthSpin,'Next Month Spin')">🎡 NEXT MONTH SPIN</button>
+      </div>
+      <div class="status">ബാക്കി അംഗങ്ങൾ: <span class="count" id="count">22</span> • ബാക്കി ഭാഗ്യ നമ്പറുകൾ: <span class="count" id="countGroups">10</span> • ഈ മാസം: <span class="count" id="monthStatus">നറുക്കെടുപ്പ് ലഭ്യമാണ്</span></div>
+
+      <div class="result" id="result">
+        <strong>Spin അമർത്തുക</strong>
+        <small>ചക്രം കറങ്ങി ഒരാളെ തിരഞ്ഞെടുക്കും</small>
+      </div>
+
+      <div class="controls">
+        <button id="okBtn" class="secondary" onclick="openPasswordGate(confirmWinner,'Winner Remove')" disabled>🏆 OK — WINNER REMOVE</button>
+      </div>
+
+      <div class="tools">
+        <button class="secondary" onclick="openPasswordGate(undoLast,'Last Winner Reset')">↩️ അവസാന winner തിരികെ</button>
+        <button class="secondary" onclick="backup()">💾 Backup</button>
+        <label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer;padding:9px 11px;border-radius:13px;font-size:13px;font-weight:800">
+          📂 Restore <input id="restoreInput" type="file" accept=".json,application/json">
+        </label>
+        <button class="danger" onclick="openPasswordGate(resetAll,'All Reset')">♻️ എല്ലാവരെയും Reset</button>
+      </div>
+      <div class="note">
+        <b style="color:#ffd34e">നിയമം:</b> ചക്രത്തിൽ ഓരോ <b>ബാക്കിയുള്ള ഭാഗ്യ നമ്പറിനും</b> തുല്യ probability ആണ് — ആ നമ്പറിൽ 1 പേരായാലും 4 പേരായാലും ജയിക്കാനുള്ള സാധ്യത ഒരുപോലെ. ഒരു ഭാഗ്യ നമ്പർ (ഉദാ. 1) വിജയിച്ചാൽ, ആ നമ്പർ ഉള്ള <b>എല്ലാ ആളുകളെയും</b> ഈ ചിട്ടി പൂർത്തിയായതായി കണക്കാക്കി wheel-ൽ നിന്ന് ഒഴിവാക്കും. അടുത്ത മാസം ബാക്കിയുള്ള ഭാഗ്യ നമ്പറുകളിൽ നിന്ന് പൊതുവായി വീണ്ടും Spin ചെയ്യാം.<br><br>
+        ഈ ഫയൽ browser storage-ൽ പുരോഗതി സൂക്ഷിക്കും. മൊബൈൽ/ലാപ്ടോപ്പുകൾക്കിടയിൽ മാറ്റണമെങ്കിൽ Backup JSON എടുത്ത് മറ്റേ device-ൽ Restore ചെയ്യാം.
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="list-title">
+        <h2>👥 ബാക്കി ആളുകൾ</h2>
+        <span class="count" id="count2">22</span>
+      </div>
+      <div class="people" id="people"></div>
+
+      <div class="history">
+        <h3>🏆 Winners List — ഇതിനകം തിരഞ്ഞെടുക്കപ്പെട്ടവർ</h3>
+        <div id="history"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const INITIAL = [{"name": "Bijula Mrs", "amount": 5000, "luck": 1}, {"name": "Kaleshan sir", "amount": 5000, "luck": 1}, {"name": "Mubassir sir", "amount": 5000, "luck": 1}, {"name": "Mujeeb sir", "amount": 5000, "luck": 1}, {"name": "Sabira tr", "amount": 5000, "luck": 2}, {"name": "Sakeena tr", "amount": 5000, "luck": 2}, {"name": "Salmath tr", "amount": 5000, "luck": 2}, {"name": "Shahina Mrs", "amount": 5000, "luck": 2}, {"name": "Ramla tr", "amount": 15000, "luck": 3}, {"name": "Sheena tr", "amount": 5000, "luck": 3}, {"name": "Jisha tr", "amount": 15000, "luck": 4}, {"name": "Uma tr", "amount": 5000, "luck": 4}, {"name": "Aneesa tr", "amount": 10000, "luck": 5}, {"name": "Lailabi tr", "amount": 10000, "luck": 5}, {"name": "Mahrunnisa tr", "amount": 10000, "luck": 6}, {"name": "Mumtas tr", "amount": 10000, "luck": 6}, {"name": "Rekha tr", "amount": 10000, "luck": 7}, {"name": "Resmi tr", "amount": 10000, "luck": 7}, {"name": "Safiya tr", "amount": 10000, "luck": 8}, {"name": "Sharafunneesa tr", "amount": 10000, "luck": 8}, {"name": "Kabeer sir", "amount": 20000, "luck": 9}, {"name": "Shihab", "amount": 20000, "luck": 0}];
+const STORAGE_KEY = "chitty_lucky_wheel_v1";
+
+let state = loadState();
+let rotation = 0;
+let spinning = false;
+let pendingWinner = null;
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const spinBtn = document.getElementById("spinBtn");
+const okBtn = document.getElementById("okBtn");
+const result = document.getElementById("result");
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(Array.isArray(s.remaining) && Array.isArray(s.history)) return s;
+    }
+  }catch(e){}
+  return {remaining: INITIAL.map((p,i)=>({...p,id:i+1})), history:[]};
+}
+
+
+// Participant-editor compatibility for older saved files.
+function ensureAllPeople(){
+  if(!Array.isArray(state.allPeople) || !state.allPeople.length){
+    const map = new Map();
+    (Array.isArray(state.remaining) ? state.remaining : []).forEach(p=>map.set(String(p.id ?? p.name), {...p}));
+    (Array.isArray(state.history) ? state.history : []).forEach(h=>{
+      (Array.isArray(h.removed) ? h.removed : []).forEach(p=>map.set(String(p.id ?? p.name), {...p}));
+    });
+    // For very old saved data with no removed records, fall back to the original list.
+    if(!map.size && Array.isArray(INITIAL)){
+      INITIAL.forEach((p,i)=>map.set(String(i+1), {...p,id:i+1}));
+    }
+    state.allPeople = [...map.values()];
+  }
+}
+
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){}
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function currentMonthKey(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function hasWinnerThisMonth(){
+  const key=currentMonthKey();
+  return state.history.some(x=>x.monthKey===key);
+}
+function updateMonthLock(){
+  const canSpin=!spinning && state.remaining.length>0;
+  const sb=document.getElementById("spinBtn");
+  if(sb) sb.disabled=!canSpin;
+  const nm=document.getElementById("nextMonthBtn");
+  const nms=document.getElementById("nextMonthSpinBtn");
+  if(nm) nm.disabled=spinning || state.remaining.length===0;
+  if(nms) nms.disabled=spinning || state.remaining.length===0;
+}
+
+// Groups the remaining participants by lucky number so the wheel gives
+// every REMAINING LUCKY NUMBER an equal chance to win — regardless of how
+// many people share that number. A 1-person ₹20,000 number and a 4-person
+// ₹5,000-each number both get exactly one, equally-sized wheel slice.
+function getRemainingGroups(){
+  const map = new Map();
+  for(const p of state.remaining){
+    const key = String(p.luck);
+    if(!map.has(key)) map.set(key, {luck:p.luck, members:[], totalAmount:0});
+    const g = map.get(key);
+    g.members.push(p);
+    g.totalAmount += Number(p.amount||0);
+  }
+  return [...map.values()].sort((a,b)=> Number(a.luck) - Number(b.luck));
+}
+function renderList(){
+
+  const nm=document.getElementById("nextMonthBtn");
+  const nms=document.getElementById("nextMonthSpinBtn");
+  if(nm) nm.disabled = spinning;
+  if(nms) nms.disabled = spinning || !state.remaining.length;
+  document.getElementById("count").textContent = state.remaining.length;
+  document.getElementById("count2").textContent = state.remaining.length;
+  const groupsCountEl = document.getElementById("countGroups");
+  if(groupsCountEl) groupsCountEl.textContent = getRemainingGroups().length;
+  const box = document.getElementById("people");
+  if(!state.remaining.length){
+    box.innerHTML = '<div class="empty">🎉 എല്ലാവരും തിരഞ്ഞെടുക്കപ്പെട്ടു.</div>';
+  }else{
+    box.innerHTML = state.remaining.map((p,i)=>`
+      <div class="person">
+        <div class="num">${i+1}</div>
+        <div class="pname">${escapeHtml(p.name)}</div>
+        <div class="meta">ഭാഗ്യ നമ്പർ <span class="luck">${p.luck}</span><br>₹${Number(p.amount).toLocaleString("en-IN")}</div>
+      </div>`).join("");
+  }
+
+  const h = document.getElementById("history");
+  h.innerHTML = state.history.length
+    ? state.history.slice().reverse().map(x=>`
+      <div class="history-item">
+        <b>🏆 ${escapeHtml(x.winner?.name || x.name || "")}</b>
+        — ഭാഗ്യ നമ്പർ <b>${x.luckyNumber ?? x.luck}</b>
+        — ${Array.isArray(x.removed) ? x.removed.length : 1} പേർ ഒഴിവാക്കി<br>
+        <span style="color:#64748b">${escapeHtml(x.date)}</span>
+      </div>`).join("")
+    : '<div class="empty">ഇതുവരെ winner ഇല്ല.</div>';
+
+  updateMonthLock();
+  drawWheel();
+}
+
+function drawWheel(){
+  const groups = getRemainingGroups();
+  const W = canvas.width, H = canvas.height, cx=W/2, cy=H/2;
+  const r = Math.min(W,H)*0.455;
+  ctx.clearRect(0,0,W,H);
+
+  if(!groups.length){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle="#171020"; ctx.fill();
+    ctx.strokeStyle="#ffd34e"; ctx.lineWidth=12; ctx.stroke();
+    ctx.fillStyle="#ffd34e"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font="900 34px sans-serif"; ctx.fillText("ALL WINNERS",cx,cy-20);
+    ctx.font="700 23px sans-serif"; ctx.fillText("SELECTED",cx,cy+25);
+    return;
+  }
+
+  // Every LUCKY NUMBER gets one equally-sized slice, no matter how many
+  // people share it — this is what makes the win probability equal per
+  // number instead of per person.
+  const slice = Math.PI*2/groups.length;
+  const base = -Math.PI/2;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(rotation);
+
+  const palette = ["#e53935","#1565c0","#7b1fa2","#00897b","#ef6c00","#2e7d32","#c2185b","#5e35b1"];
+
+  for(let i=0;i<groups.length;i++){
+    const a0=base+i*slice, a1=a0+slice;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,a0,a1); ctx.closePath();
+    ctx.fillStyle=palette[i%palette.length]; ctx.fill();
+    ctx.strokeStyle="#ffd76a"; ctx.lineWidth=2.5; ctx.stroke();
+
+    const g=groups[i], mid=a0+slice/2;
+    ctx.save(); ctx.rotate(mid); ctx.translate(r*0.69,0); ctx.rotate(Math.PI/2);
+    ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
+
+    const luckFs=Math.max(13,Math.min(23,320/groups.length));
+    const nameCount=g.members.length;
+    const nameFs=Math.max(8,Math.min(luckFs-4,(160/Math.max(nameCount,1))));
+    const lineHeight=nameFs+3;
+    const totalLines=nameCount+1; // lucky number line + one line per member
+    let startY=-((totalLines-1)*lineHeight)/2;
+
+    ctx.font=`900 ${luckFs}px Arial, sans-serif`;
+    ctx.fillText("★ "+g.luck,0,startY);
+
+    ctx.font=`700 ${nameFs}px Arial, sans-serif`;
+    g.members.forEach((m,mi)=>{
+      let name=m.name;
+      const maxChars=Math.max(8,Math.floor(220/nameFs));
+      if(name.length>maxChars) name=name.replace(" Mrs","").replace(" sir","").replace(" tr","");
+      if(name.length>maxChars) name=name.slice(0,maxChars)+"…";
+      ctx.fillText(name,0,startY+(mi+1)*lineHeight);
+    });
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Gold outer rim + illuminated bulbs.
+  ctx.beginPath(); ctx.arc(cx,cy,r+2,0,Math.PI*2);
+  ctx.strokeStyle="#ffd34e"; ctx.lineWidth=12; ctx.stroke();
+  const bulbs=36;
+  for(let i=0;i<bulbs;i++){
+    const a=i*Math.PI*2/bulbs;
+    const bx=cx+Math.cos(a)*(r+2), by=cy+Math.sin(a)*(r+2);
+    ctx.beginPath(); ctx.arc(bx,by,6,0,Math.PI*2);
+    ctx.fillStyle=(i%2 ? "#fff4a3" : "#ffb300"); ctx.fill();
+    ctx.shadowBlur=10; ctx.shadowColor="#ffd34e"; ctx.stroke(); ctx.shadowBlur=0;
+  }
+}
+function winnerIndex(){
+  const items=state.remaining, n=items.length, slice=Math.PI*2/n, base=-Math.PI/2;
+  // Pointer is at base. Find the segment whose center is nearest the pointer after rotation.
+  let rel = ((base - rotation - base) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+  let idx = Math.floor(rel/slice);
+  if(idx<0) idx=0;
+  if(idx>=n) idx=n-1;
+  return idx;
+}
+
+let audioCtx=null, soundOn=true, tickTimer=null;
+
+function ensureAudio(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+}
+function tone(freq,dur=.08,type="sine",gain=.035){
+  if(!soundOn) return;
+  ensureAudio();
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(gain,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+  o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+}
+function startTick(){
+  if(!soundOn) return;
+  ensureAudio();
+  let last=-1;
+  tickTimer=setInterval(()=>{
+    const n=getRemainingGroups().length;
+    const now=Math.floor((rotation%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/(Math.PI*2/Math.max(n,1)));
+    if(now!==last){ tone(720,.035,"square",.018); last=now; }
+  },55);
+}
+function stopTick(){ if(tickTimer){clearInterval(tickTimer);tickTimer=null;} }
+function winSound(){
+  if(!soundOn) return;
+  [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,.18,"sine",.06),i*105));
+}
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById("soundBtn").textContent=soundOn?"🔊 Sound ON":"🔇 Sound OFF";
+  if(soundOn) tone(880,.08,"sine",.04);
+}
+
+const fxCanvas=document.getElementById("fx"), fctx=fxCanvas.getContext("2d");
+let particles=[];
+function resizeFX(){fxCanvas.width=innerWidth*devicePixelRatio;fxCanvas.height=innerHeight*devicePixelRatio;fctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}
+resizeFX(); addEventListener("resize",resizeFX);
+function fireworks(){
+  const w=innerWidth,h=innerHeight;
+  for(let k=0;k<5;k++){
+    const x=w*(.15+Math.random()*.7), y=h*(.12+Math.random()*.45);
+    for(let i=0;i<65;i++){
+      const a=Math.random()*Math.PI*2, sp=2+Math.random()*5;
+      particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,
+        hue:Math.random()*360,size:1+Math.random()*3});
+    }
+  }
+  animateFX();
+}
+let fxRunning=false;
+function animateFX(){
+  if(fxRunning) return; fxRunning=true;
+  function loop(){
+    fctx.clearRect(0,0,innerWidth,innerHeight);
+    particles=particles.filter(p=>p.life>0);
+    for(const p of particles){
+      p.x+=p.vx;p.y+=p.vy;p.vy+=.045;p.life-=.012;
+      fctx.globalAlpha=Math.max(0,p.life);fctx.fillStyle=`hsl(${p.hue},100%,65%)`;
+      fctx.beginPath();fctx.arc(p.x,p.y,p.size,0,Math.PI*2);fctx.fill();
+    }
+    fctx.globalAlpha=1;
+    if(particles.length) requestAnimationFrame(loop); else {fctx.clearRect(0,0,innerWidth,innerHeight);fxRunning=false;}
+  }
+  requestAnimationFrame(loop);
+}
+function confetti(){
+  const box=document.getElementById("confetti");
+  box.innerHTML="";
+  for(let i=0;i<130;i++){
+    const el=document.createElement("i"); el.className="conf";
+    el.style.left=Math.random()*100+"vw";
+    el.style.top=(-10-Math.random()*20)+"vh";
+    el.style.background=`hsl(${Math.random()*360},100%,60%)`;
+    el.style.transform=`rotate(${Math.random()*360}deg)`;
+    el.style.animationDelay=(Math.random()*.8)+"s";
+    el.style.animationDuration=(2.2+Math.random()*1.8)+"s";
+    box.appendChild(el);
+  }
+  setTimeout(()=>box.innerHTML="",4500);
+}
+
+function showCenterWinner(person){
+  const center=document.getElementById("centerWinner");
+  if(!center) return;
+  center.classList.remove("winner");
+  center.querySelector(".centerSmall").textContent="🎉 CONGRATS!";
+  const members = Array.isArray(person.members) ? person.members : [{name:person.name}];
+  const label = members.length>1
+    ? `${members.map(m=>m.name.split(" ")[0]).join(", ")}`
+    : person.name;
+  center.querySelector(".centerName").textContent=label;
+  center.classList.add("winner");
+  center.style.display="grid";
+}
+
+function resetCenterWinner(){
+  const center=document.getElementById("centerWinner");
+  if(!center) return;
+  center.classList.remove("winner");
+  center.querySelector(".centerSmall").textContent="SPIN";
+  center.querySelector(".centerName").textContent="";
+}
+
+function showWinnerOverlay(person){
+  const overlay=document.getElementById("winnerOverlay");
+  if(!overlay) return;
+
+  const name=document.getElementById("overlayWinnerName");
+  const luck=document.getElementById("overlayLuck");
+  const members = Array.isArray(person.members) ? person.members : [{name:person.name}];
+
+  if(name){
+    name.innerHTML = members.map(m=>escapeHtml(m.name)).join("<br>");
+    name.style.fontSize = members.length>2 ? "clamp(18px,4.5vw,32px)" : "";
+  }
+  if(luck) luck.textContent =
+    `Lucky Number: ${person.luck}  •  Amount: ₹${Number(person.amount).toLocaleString("en-IN")}`;
+
+  // Do not auto-hide: user taps the celebration to close it.
+  overlay.style.display="flex";
+  overlay.style.opacity="1";
+  overlay.classList.add("show");
+
+  overlay.onclick=()=>{
+    overlay.classList.remove("show");
+    overlay.style.display="none";
+  };
+
+}
+
+function flowerShower(){
+  const box=document.getElementById("flowerShower");
+  if(!box) return;
+  box.innerHTML="";
+
+  const flowers=["🌸","🌺","🌼","🌷","💮","🌹"];
+  const colors=["#ff3b7a","#ffd23f","#ffffff","#ff78b5","#c56cff","#ff8b3d"];
+
+  for(let i=0;i<120;i++){
+    const p=document.createElement("span");
+    p.className="petal";
+
+    if(i%5===0){
+      p.classList.add("flower");
+      p.textContent=flowers[i%flowers.length];
+      p.style.fontSize=(18+Math.random()*16)+"px";
+      p.style.width="28px";
+      p.style.height="28px";
+      p.style.background="transparent";
+    }else{
+      p.style.background=colors[i%colors.length];
+    }
+
+    p.style.left=Math.random()*100+"vw";
+    p.style.setProperty("--sway",(Math.random()*320-160)+"px");
+    p.style.animationDuration=(3+Math.random()*4)+"s";
+    p.style.animationDelay=(Math.random()*1.4)+"s";
+    box.appendChild(p);
+  }
+
+  setTimeout(()=>box.innerHTML="",8500);
+}
+
+function domFireworks(){
+  const box=document.getElementById("domFireworks");
+  if(!box) return;
+  box.innerHTML="";
+  const colors=["#ff3b30","#ffd60a","#30d158","#64d2ff","#bf5af2","#ff375f"];
+
+  for(let b=0;b<7;b++){
+    const cx=10+Math.random()*80;
+    const cy=12+Math.random()*42;
+
+    for(let i=0;i<34;i++){
+      const dot=document.createElement("i");
+      dot.className="burst";
+      dot.style.left=cx+"vw";
+      dot.style.top=cy+"vh";
+      dot.style.background=colors[(b+i)%colors.length];
+      const a=(Math.PI*2*i/34);
+      const d=70+Math.random()*150;
+      dot.style.setProperty("--dx",Math.cos(a)*d+"px");
+      dot.style.setProperty("--dy",Math.sin(a)*d+"px");
+      dot.style.animationDelay=(b*.16)+"s";
+      box.appendChild(dot);
+    }
+  }
+  setTimeout(()=>box.innerHTML="",4000);
+}
+
+
+function nextMonth(){
+  if(spinning) return;
+  if(!state.remaining.length){
+    alert("എല്ലാ ഭാഗ്യ നമ്പറുകളും ഇതിനകം പൂർത്തിയായി.");
+    return;
+  }
+  pendingWinner=null;
+  okBtn.disabled=true;
+  resetCenterWinner();
+  result.innerHTML=`<strong>📅 NEXT MONTH</strong>
+    <small>ബാക്കിയുള്ള ${state.remaining.length} അംഗങ്ങളിൽ നിന്ന് വീണ്ടും Spin ചെയ്യാം.</small>`;
+  ensureAllPeople();
+  renderList();
+}
+
+function newMonthSpin(){
+  if(spinning || !state.remaining.length) return;
+  nextMonth();
+  setTimeout(()=>spin(),180);
+}
+
+
+function spin(){
+  if(spinning || !state.remaining.length) return;
+  ensureAudio();
+  tone(220,.12,"sawtooth",.035);
+  spinning=true; pendingWinner=null; okBtn.disabled=true; spinBtn.disabled=true;
+  result.innerHTML="<strong>🎡 JACKPOT WHEEL SPINNING...</strong><small>ഭാഗ്യശാലിയെ തിരഞ്ഞെടുക്കുന്നു</small>";
+  startTick();
+
+  // Equal probability per REMAINING LUCKY NUMBER, regardless of how many
+  // people belong to that number's group.
+  const groups=getRemainingGroups();
+  const n=groups.length;
+  const idx=Math.floor(Math.random()*n);
+  const slice=Math.PI*2/n;
+  const pointer=-Math.PI/2;
+  const winnerCenter=pointer+(idx+0.5)*slice;
+  const desired=pointer-winnerCenter;
+  const turns=8+Math.floor(Math.random()*3);
+  const start=rotation;
+  let delta=((desired-rotation)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+  const end=start+turns*Math.PI*2+delta;
+  const duration=5600;
+  const t0=performance.now();
+
+  function ease(t){ return 1-Math.pow(1-t,4); }
+  function frame(now){
+    const t=Math.min(1,(now-t0)/duration);
+    rotation=start+(end-start)*ease(t);
+    drawWheel();
+    if(t<1){ requestAnimationFrame(frame); return; }
+
+    rotation=((end%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+
+    const winGroup=groups[idx];
+    pendingWinner={
+      luck: winGroup.luck,
+      amount: winGroup.totalAmount,
+      name: winGroup.members.map(m=>m.name).join(" + "),
+      members: winGroup.members
+    };
+
+    stopTick();
+    const namesLine = winGroup.members.map(m=>escapeHtml(m.name)).join(", ");
+    result.innerHTML=`<strong>🏆 JACKPOT! ഭാഗ്യ നമ്പർ ${pendingWinner.luck}</strong>
+      <small>${namesLine} • തുക: ₹${Number(pendingWinner.amount).toLocaleString("en-IN")}</small>`;
+    okBtn.disabled=false;
+    spinning=false;
+    updateMonthLock();
+
+    showCenterWinner(pendingWinner);
+    showWinnerOverlay(pendingWinner);
+    winSound();
+    fireworks();
+    confetti();
+    flowerShower();
+    domFireworks();
+  }
+  requestAnimationFrame(frame);
+}
+
+function normalizeAngle(a){
+  let x=((a%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  if(x>Math.PI) x-=Math.PI*2;
+  return x;
+}
+
+function confirmWinner(){
+  if(!pendingWinner || spinning) return;
+
+  const luckyNumber = pendingWinner.luck;
+  const selectedGroup = state.remaining.filter(p => p.luck === luckyNumber);
+  if(!selectedGroup.length) return;
+
+  // A winning lucky number means the entire group with that lucky number
+  // has completed/been used for this chitty and must leave the wheel.
+  state.remaining = state.remaining.filter(p => p.luck !== luckyNumber);
+
+  state.history.push({
+    winner: {...pendingWinner},
+    luckyNumber: luckyNumber,
+    removed: selectedGroup.map(p => ({...p})),
+    monthKey: currentMonthKey(),
+    date:new Date().toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"})
+  });
+
+  saveState();
+  pendingWinner=null;
+  okBtn.disabled=true;
+  resetCenterWinner();
+
+  result.innerHTML=`<strong>🏆 ഭാഗ്യ നമ്പർ ${luckyNumber} COMPLETED!</strong>
+    <small>${selectedGroup.length} പേരെയും ലിസ്റ്റിൽ നിന്ന് ഒഴിവാക്കി • അടുത്ത മാസം ബാക്കി നമ്പറുകളിൽ നിന്ന് Spin ചെയ്യാം</small>`;
+
+  renderList();
+}
+function undoLast(){
+  if(spinning || !state.history.length) return;
+
+  const last=state.history.pop();
+
+  // Restore every member that was removed together with the winning lucky number.
+  const restored = Array.isArray(last.removed)
+    ? last.removed
+    : (last.winner ? [last.winner] : []);
+
+  const existingIds = new Set(state.remaining.map(p => p.id));
+  for(const p of restored){
+    if(!existingIds.has(p.id)) state.remaining.push({...p});
+  }
+
+  saveState();
+  pendingWinner=null;
+  okBtn.disabled=true;
+  resetCenterWinner();
+
+  result.innerHTML=`<strong>↩️ ഭാഗ്യ നമ്പർ ${last.luckyNumber ?? ""} തിരികെ ചേർത്തു</strong>
+    <small>${restored.length} പേരെയും വീണ്ടും wheel-ലേക്ക് കൊണ്ടുവന്നു</small>`;
+
+  renderList();
+}
+
+function resetAll(){
+  if(!confirm("എല്ലാ winner-മാരെയും ഒഴിവാക്കി 22 പേരെയും വീണ്ടും ചക്രത്തിൽ കൊണ്ടുവരണമോ?")) return;
+  state={remaining:INITIAL.map((p,i)=>({...p,id:i+1})),history:[]};
+  rotation=0; pendingWinner=null; okBtn.disabled=true;
+  saveState(); result.innerHTML="<strong>♻️ Reset പൂർത്തിയായി</strong><small>എല്ലാ 22 പേരും വീണ്ടും ലഭ്യമാണ്</small>";
+  renderList();
+}
+
+function backup(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="chitty-wheel-backup.json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+document.getElementById("restoreInput").addEventListener("change", async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  try{
+    const imported=JSON.parse(await file.text());
+    if(!Array.isArray(imported.remaining)||!Array.isArray(imported.history)) throw new Error();
+    state=imported; pendingWinner=null; okBtn.disabled=true; saveState(); renderList();
+    result.innerHTML="<strong>📂 Restore വിജയിച്ചു</strong><small>മുൻപ് save ചെയ്ത നില തിരിച്ചെത്തി</small>";
+  }catch(err){
+    alert("Backup file ശരിയായതല്ല.");
+  }
+  e.target.value="";
+});
+
+window.addEventListener("resize",drawWheel);
+renderList();
+
+// ===== Participant Editor =====
+const EDIT_PASSWORD_KEY = "chitty_edit_password_hash_v1";
+const DEFAULT_EDIT_PASSWORD_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+function getEditPasswordHash(){
+  return localStorage.getItem(EDIT_PASSWORD_KEY) || DEFAULT_EDIT_PASSWORD_HASH;
+}
+
+async function sha256Text(text){
+  if(window.crypto && crypto.subtle){
+    const data=new TextEncoder().encode(text);
+    const hash=await crypto.subtle.digest("SHA-256",data);
+    return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  // Fallback for older browsers: default password still works only through a
+  // simple local comparison path.
+  return text;
+}
+
+// Generic password gate: used by Edit Participants, Payment Distribution,
+// Next Month, Next Month Spin, Winner Remove, Last Winner Reset, and All Reset.
+let pendingPasswordAction = null;
+
+function openPasswordGate(action, label){
+  pendingPasswordAction = (typeof action === "function") ? action : null;
+  const titleEl = document.getElementById("lockActionTitle");
+  const labelEl = document.getElementById("lockActionLabel");
+  if(titleEl) titleEl.textContent = label ? label : "Password Required";
+  if(labelEl) labelEl.textContent = label
+    ? `🔒 "${label}" ചെയ്യാൻ password നൽകുക.`
+    : "തുടരാൻ password നൽകുക.";
+  document.getElementById("editPasswordInput").value="";
+  document.getElementById("editPasswordMsg").textContent="";
+  document.getElementById("editLockModal").classList.add("show");
+  setTimeout(()=>document.getElementById("editPasswordInput").focus(),50);
+}
+
+// Backward-compatible alias.
+function openEditorLock(){
+  openPasswordGate(openEditor, "Edit Participants");
+}
+
+function closeEditLock(){
+  document.getElementById("editLockModal").classList.remove("show");
+  pendingPasswordAction = null;
+}
+
+async function unlockEditor(){
+  const input=document.getElementById("editPasswordInput").value;
+  const hash=await sha256Text(input);
+  const ok=(hash===getEditPasswordHash()) || (!crypto.subtle && input==="1234");
+  if(!ok){
+    document.getElementById("editPasswordMsg").textContent="❌ തെറ്റായ password";
+    return;
+  }
+  const action = pendingPasswordAction;
+  pendingPasswordAction = null;
+  document.getElementById("editLockModal").classList.remove("show");
+  if(typeof action === "function") action();
+}
+
+function openEditor(){
+  renderEditorRows();
+  document.getElementById("editorModal").classList.add("show");
+}
+
+function closeEditor(){
+  document.getElementById("editorModal").classList.remove("show");
+}
+
+function editorSourceList(){
+  // Edit the full original participant list if available; otherwise use remaining list.
+  if(Array.isArray(state.allPeople) && state.allPeople.length) return state.allPeople;
+  if(Array.isArray(state.remaining)) return state.remaining;
+  return [];
+}
+
+function renderEditorRows(){
+  const tbody=document.getElementById("editorRows");
+  const list=editorSourceList();
+  tbody.innerHTML="";
+  list.forEach((p,i)=>addParticipantRow(p,i));
+}
+
+function addParticipantRow(p={name:"",luck:"",amount:""}, index=null){
+  const tbody=document.getElementById("editorRows");
+  const tr=document.createElement("tr");
+  tr.dataset.index=index===null ? "" : String(index);
+  tr.innerHTML=`
+    <td><input class="ep-name" value="${escapeAttr(p.name||"")}" placeholder="Name"></td>
+    <td><input class="ep-luck" type="number" value="${escapeAttr(p.luck??"")}" placeholder="1"></td>
+    <td><input class="ep-amount" type="number" value="${escapeAttr(p.amount??"")}" placeholder="1000"></td>
+    <td><button class="del" onclick="this.closest('tr').remove()">🗑️</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function escapeAttr(v){
+  return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function saveParticipants(){
+  if(spinning){ alert("Spin നടക്കുമ്പോൾ participant list മാറ്റാൻ കഴിയില്ല."); return; }
+
+  const rows=[...document.querySelectorAll("#editorRows tr")];
+  const newList=[];
+  const seen=new Set();
+
+  for(const row of rows){
+    const name=row.querySelector(".ep-name").value.trim();
+    const luck=Number(row.querySelector(".ep-luck").value);
+    const amount=Number(row.querySelector(".ep-amount").value);
+
+    if(!name) continue;
+    if(!Number.isFinite(luck) || luck<=0){ alert(`"${name}" ന്റെ Lucky Number ശരിയല്ല.`); return; }
+    if(!Number.isFinite(amount) || amount<0){ alert(`"${name}" ന്റെ Amount ശരിയല്ല.`); return; }
+
+    newList.push({name, luck, amount});
+  }
+
+  if(!newList.length){ alert("കുറഞ്ഞത് ഒരാൾ എങ്കിലും വേണം."); return; }
+
+  // Rebuild the whole draw from the newly edited participant list.
+  // This intentionally starts a fresh participant state so old removed groups
+  // cannot accidentally disappear after an edit.
+  state.remaining = newList.map((p,i)=>({...p,id:i+1}));
+  state.allPeople = newList.map((p,i)=>({...p,id:i+1}));
+  state.history = [];
+  pendingWinner=null;
+  okBtn.disabled=true;
+  spinning=false;
+
+  if(typeof saveState==="function") saveState();
+  renderList();
+  closeEditor();
+
+  result.innerHTML=`<strong>✅ PARTICIPANT LIST UPDATED</strong>
+    <small>${newList.length} പേരെ പുതിയ list ആയി സജ്ജമാക്കി. ഇനി Spin ചെയ്യാം.</small>`;
+}
+
+function importParticipants(){
+  const text=prompt(
+    "ഓരോ വരിയിലും Name | Lucky Number | Amount എന്ന format-ൽ നൽകുക.\\nഉദാ: Abdul | 1 | 1000"
+  );
+  if(!text) return;
+
+  const tbody=document.getElementById("editorRows");
+  tbody.innerHTML="";
+
+  text.split(/\\r?\\n/).forEach(line=>{
+    const parts=line.split("|").map(x=>x.trim());
+    if(parts.length>=2 && parts[0]){
+      addParticipantRow({
+        name:parts[0],
+        luck:parts[1]||"",
+        amount:parts[2]||""
+      });
+    }
+  });
+}
+
+async function changeEditPassword(){
+  const oldPass=prompt("നിലവിലെ password നൽകുക:");
+  if(oldPass===null) return;
+
+  const oldHash=await sha256Text(oldPass);
+  const ok=(oldHash===getEditPasswordHash()) || (!crypto.subtle && oldPass==="1234");
+  if(!ok){ alert("❌ നിലവിലെ password തെറ്റാണ്."); return; }
+
+  const newPass=prompt("പുതിയ password നൽകുക:");
+  if(!newPass || newPass.length<4){ alert("Password കുറഞ്ഞത് 4 characters വേണം."); return; }
+
+  const confirmPass=prompt("പുതിയ password വീണ്ടും നൽകുക:");
+  if(newPass!==confirmPass){ alert("❌ Password-കൾ match ചെയ്യുന്നില്ല."); return; }
+
+  const hash=await sha256Text(newPass);
+  localStorage.setItem(EDIT_PASSWORD_KEY,hash);
+  alert("✅ Password മാറ്റി.");
+}
+
+
+// ===== Automatic Payment Distribution =====
+//
+// Real chit-fund rule:
+//  • Each winner's total payout = their own monthly chitty amount × 10
+//      ₹20,000 → ₹2,00,000  ·  ₹10,000 → ₹1,00,000  ·  ₹5,000 → ₹50,000
+//    That payout is made up of the winner's OWN monthly contribution
+//    (× 1) plus contributions from every OTHER member for that round (× 9).
+//  • Winners never pay each other — for the round they win, only the
+//    OTHER members (everyone not in that winning lucky-number group)
+//    contribute toward their payout.
+//  • Every other member's monthly amount goes WHOLE to exactly one
+//    winner in that round (amounts are not fractionally split) — members
+//    already paid out in an earlier round still contribute in later
+//    rounds, exactly as in a real chit fund, since only THAT round's
+//    winners are excluded from THAT round's payer pool.
+//  • Payers are balanced across the winners of the SAME round so each
+//    winner ends up as close as possible to their own target (equal
+//    split when winners share the same monthly amount, e.g. a 2-person
+//    ₹1,00,000-each or 4-person ₹50,000-each group).
+//
+function closePaymentDistribution(){ document.getElementById("paymentModal").classList.remove("show"); }
+
+function openPaymentDistribution(){
+  if(spinning){ alert("Spin നടക്കുമ്പോൾ Payment Distribution കാണാൻ കഴിയില്ല."); return; }
+  renderPaymentDistribution();
+  document.getElementById("paymentModal").classList.add("show");
+}
+
+function chitTotal(p){ return Number(p.amount||0)*10; }     // full payout (own + others)
+function payerTarget(p){ return Number(p.amount||0)*9; }    // amount needed from OTHER members
+
+function money(n){ return "₹"+Number(Math.round(n)||0).toLocaleString("en-IN"); }
+
+// Builds one entry per Winners List round, each with its own winner group
+// and its own balanced whole-payer breakdown.
+function calculatePaymentDistribution(){
+  ensureAllPeople();
+  const all = Array.isArray(state.allPeople) ? state.allPeople : [];
+  const rounds = [];
+
+  (state.history || []).forEach((h, hi) => {
+    const group = Array.isArray(h.removed) && h.removed.length
+      ? h.removed
+      : (h.winner ? [h.winner] : []);
+    if(!group.length) return;
+
+    const groupIds   = new Set(group.map(g => String(g.id ?? g.name)));
+    const groupNames = new Set(group.map(g => String(g.name||"").trim().toLowerCase()));
+
+    // Payer pool for THIS round only = everyone except this round's own
+    // winning group (past/future winners of OTHER rounds still pay here).
+    const payers = all.filter(p => {
+      const id   = String(p.id ?? p.name);
+      const name = String(p.name||"").trim().toLowerCase();
+      return !groupIds.has(id) && !groupNames.has(name);
+    }).map(p => ({...p, amount: Number(p.amount||0)})).filter(p => p.amount > 0);
+
+    const winners = group.map(w => ({
+      ...w,
+      target: chitTotal(w),
+      otherTarget: payerTarget(w),
+      assigned: [],
+      assignedTotal: 0
+    }));
+
+    // Balanced whole-payer assignment: largest payer first, each one goes
+    // entirely to whichever winner it fits best (least overshoot, then
+    // closest to that winner's remaining gap) — this naturally produces an
+    // equal split when winners in the group share the same monthly amount.
+    const ordered = [...payers].sort((a,b) => b.amount - a.amount);
+    for(const payer of ordered){
+      let best = null;
+      for(const w of winners){
+        const gap = w.otherTarget - w.assignedTotal;
+        const overshoot = Math.max(0, payer.amount - gap);
+        const score = overshoot*100000 + Math.abs(gap - payer.amount);
+        if(!best || score < best.score) best = {w, score};
+      }
+      if(best){
+        best.w.assigned.push(payer);
+        best.w.assignedTotal += payer.amount;
+      }
+    }
+
+    winners.forEach(w => {
+      w.remaining = Math.max(0, w.otherTarget - w.assignedTotal);
+      w.grandTotal = w.assignedTotal + Number(w.amount||0);
+    });
+
+    rounds.push({
+      historyIndex: hi,
+      luckyNumber: h.luckyNumber ?? h.winner?.luck,
+      date: h.date,
+      winners,
+      numPayers: payers.length
+    });
+  });
+
+  return rounds;
+}
+
+function renderPaymentDistribution(){
+  const box = document.getElementById("paymentContent");
+  const rounds = calculatePaymentDistribution();
+
+  if(!rounds.length){
+    box.innerHTML='<div class="paymentWinner"><strong>🏆 Winners List ശൂന്യമാണ്.</strong><div style="color:#b7bfd0;margin-top:6px">ആദ്യം Winner-നെ OK ചെയ്ത് Winners List-ൽ ചേർക്കുക.</div></div>';
+    return;
+  }
+
+  box.innerHTML = rounds.map((round, ri) => {
+    const roundHeader = `<div class="paymentShareHint">📅 Round ${ri+1}${round.date ? " · "+escapeHtml(round.date) : ""} · ഭാഗ്യ നമ്പർ ${escapeHtml(round.luckyNumber ?? "")} · ${round.winners.length} Winners · ${round.numPayers} Eligible payers ഈ റൗണ്ടിൽ</div>`;
+
+    const winnerCards = round.winners.map((w, wi) => {
+      const rows = w.assigned.length
+        ? w.assigned.map(p => `<div>${escapeHtml(p.name)} <span>${money(p.amount)}</span></div>`).join("")
+        : '<div style="grid-column:1/-1;color:#ffb4b4">Eligible payer ഇല്ല.</div>';
+      const status = w.remaining === 0
+        ? `<div class="paymentTotal">✅ Other members: ${money(w.assignedTotal)} / ${money(w.otherTarget)} · Total payout: ${money(w.grandTotal)} / ${money(w.target)}</div>`
+        : `<div class="paymentTotal" style="color:#ff9f9f">⚠️ Other members: ${money(w.assignedTotal)} / ${money(w.otherTarget)} — Balance: ${money(w.remaining)}</div>`;
+      return `<div class="paymentWinner"><h3>🏆 ${escapeHtml(w.name||"")}</h3>
+        <div style="margin-bottom:8px">Lucky No. ${escapeHtml(w.luck??"")} · Monthly ${money(w.amount)} · ആകെ ലഭിക്കേണ്ടത് <strong>${money(w.target)}</strong> (own ${money(w.amount)} + others ${money(w.otherTarget)})</div>
+        <div class="paymentRows">${rows}</div>${status}</div>`;
+    }).join("");
+
+    return `<div style="border:1px solid #2b3346;border-radius:16px;padding:10px;margin:14px 0;background:#131725">${roundHeader}${winnerCards}</div>`;
+  }).join("");
+}
+
+// ===== PWA: register service worker (offline + installable) =====
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+
+<!-- Participant editor -->
+<div id="editLockModal">
+  <div class="lockBox">
+    <div style="font-size:38px">🔐</div>
+    <h2 style="color:#ffd34e;margin:8px 0" id="lockActionTitle">Password Required</h2>
+    <div style="color:#aeb6c7;font-size:13px" id="lockActionLabel">തുടരാൻ password നൽകുക.</div>
+    <input id="editPasswordInput" type="password" inputmode="numeric" placeholder="Password" autocomplete="off">
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="editorBtn primary" onclick="unlockEditor()">UNLOCK</button>
+      <button class="editorBtn secondary" onclick="closeEditLock()">CANCEL</button>
+    </div>
+    <div id="editPasswordMsg" style="color:#ff7b7b;margin-top:10px;font-size:13px"></div>
+  </div>
+</div>
+
+<div id="editorModal">
+  <div class="editorBox">
+    <h2>👥 Edit Participants</h2>
+    <div class="muted">പേര്, ഭാഗ്യ നമ്പർ, തുക എന്നിവ ഇവിടെ മാറ്റാം. Save ചെയ്താൽ അടുത്ത Spin മുതൽ പുതിയ list ഉപയോഗിക്കും.</div>
+
+    <div class="editorActions">
+      <button class="editorBtn primary" onclick="addParticipantRow()">➕ ADD PERSON</button>
+      <button class="editorBtn secondary" onclick="importParticipants()">📋 PASTE LIST</button>
+      <button class="editorBtn secondary" onclick="changeEditPassword()">🔐 CHANGE PASSWORD</button>
+      <button class="editorBtn secondary" onclick="closeEditor()">CLOSE</button>
+      <button class="editorBtn primary" onclick="saveParticipants()">💾 SAVE CHANGES</button>
+    </div>
+
+    <div style="overflow:auto">
+      <table class="editorTable">
+        <thead><tr><th>Name</th><th>Lucky No.</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="editorRows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div id="paymentModal">
+  <div class="paymentBox">
+    <h2>💰 Payment Distribution</h2>
+    <div class="paymentNote">ഓരോ Winner-നും ആകെ ലഭിക്കേണ്ടത് = അവരുടെ monthly amount × 10 (സ്വന്തം അടവ് + മറ്റ് അംഗങ്ങളുടെ അടവ്). ഓരോ റൗണ്ടിലും ആ റൗണ്ടിലെ winners പരസ്പരം pay ചെയ്യില്ല; ബാക്കിയുള്ള അംഗങ്ങളുടെ (നേരത്തെ വേറെ റൗണ്ടിൽ ജയിച്ചവർ ഉൾപ്പെടെ) monthly amount മുഴുവനായി ആ റൗണ്ടിലെ winners-ക്കിടയിൽ ബാലൻസ് ചെയ്ത് വീതിക്കുന്നു.</div>
+    <div id="paymentContent"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="editorBtn secondary" onclick="closePaymentDistribution()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
